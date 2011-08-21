@@ -12,7 +12,7 @@ if(!function_exists('version_compare') || !function_exists('file_get_contents') 
 // Check for minimum version
 if (version_compare(PHP_VERSION, '5.3.0') < 0) {
 	$content = '';
-	echo str_ireplace('<%content%>', $content, file_get_contents('Templates/Default/precheck.html'));
+	echo str_replace('<%content%>', $content, file_get_contents('Templates/Default/precheck.html'));
 	exit;
 }
 
