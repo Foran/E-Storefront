@@ -73,6 +73,32 @@ if(!class_exists('Installer')) {
 			DisplayTemplate('installer.html', $macros);
 			exit;
 		}
+		
+		public function Step2() {
+			$macros = array();
+			$macros['content'] = '<h1>Install Wizard for E-Storefront</h1>';
+			$macros['content'] .= '<h2>Step 2</h2>';
+
+			global $global_Database;
+			if($this->GetStep() == 'step2') {
+				$config = '<?xml version="1.0" charset="utf-8" ?>'."\r\n";
+				$config .= '<Configuration Version="1.0">';
+				$config .= '<Database Hostname="'.htmlentities($_SESSION['database']['hostname']).'"';
+				$config .= ' Username="'.htmlentities($_SESSION['database']['username']).'"';
+				$config .= ' Password="'.htmlentities($_SESSION['database']['password']).'"';
+				$config .= ' Database="'.htmlentities($_SESSION['database']['database']).'"';
+				$config .= ' Prefix="'.htmlentities($_SESSION['database']['prefix']).'" />';
+				$config .= '</Configuration>';
+				if(!file_exists('Config/Main.xml')) @file_put_contents('Config/Main.xml', $config);
+			}
+			$this->RedirectStep();
+
+			$macros['content'] .= '<p>Please write the following to Config/Main.xml</p>';
+			$macros['content'] .= '<textarea>'.htmlentities($config).'</textarea>';
+			
+			DisplayTemplate('installer.html', $macros);
+			exit;
+		}
 
 		public function FinalStep() {
 			$this->RedirectStep();
@@ -99,6 +125,20 @@ if(!class_exists('Installer')) {
 				if(isset($_SESSION['database']['hostname']) && isset($_SESSION['database']['username']) && isset($_SESSION['database']['password']) && isset($_SESSION['database']['database']) && isset($_SESSION['database']['prefix'])) {
 					$this->m_CurrentStep = 'step2';
 				}
+				else if(file_exists('Config/Main.xml')) {
+					$xml = @simplexml_load_file('Config/Main.xml');
+					if(isset($xml->Database) && isset($xml->Database['Hostname']) && isset($xml->Database['Username']) && isset($xml->Database['Password']) && isset($xml->Database['Database'])) {
+						if(!isset($_SESSION['database']['hostname'])) $_SESSION['database']['hostname'] = trim($xml->Database['Hostname']);
+						if(!isset($_SESSION['database']['username'])) $_SESSION['database']['username'] = trim($xml->Database['Username']);
+						if(!isset($_SESSION['database']['password'])) $_SESSION['database']['password'] = trim($xml->Database['Password']);
+						if(!isset($_SESSION['database']['database'])) $_SESSION['database']['database'] = trim($xml->Database['Database']);
+						if(!isset($_SESSION['database']['prefix'])) $_SESSION['database']['prefix'] = isset($xml->Database['Database']) ? trim($xml->Database['Database']) : '';
+						global $global_Database;
+						if($global_Database->Connect(trim(@$_REQUEST['hostname']), trim(@$_REQUEST['username']), trim(@$_REQUEST['password']), trim(@$_REQUEST['database']))) {
+							$this->m_CurrentStep = 'step3';
+						}	
+					}
+				}
 			}
 			return $this->m_CurrentStep;
 		}
@@ -120,6 +160,9 @@ if(!class_exists('Installer')) {
 					break;
 				case 'step2':
 					$destination = '/step2.html';
+					break;
+				case 'step3':
+					$destination = '/step3.html';
 					break;
 				default:
 					break;
