@@ -19,6 +19,14 @@ require_once('Classes/Utility/Database.php');
 //Include the template engine
 require_once('Includes/Utility/Templates.php');
 
+//Load the Permalink
+$global_Permalink = isset($_SERVER['REDIRECT_URL']) ? $_SERVER['REDIRECT_URL'] : @$_SERVER['REQUEST_URI'];
+global $global_Permalink;
+
+//Load the visitors IP Address
+$global_IP_Address = isset($_SERVER['HTTP_X_FORWARDED_FOR']) ? $_SERVER['HTTP_X_FORWARDED_FOR'] : (isset($_SERVER['HTTP_X_CLUSTER_CLIENT_IP']) ? $_SERVER['HTTP_X_CLUSTER_CLIENT_IP'] : @$_SERVER['REMOTE_ADDR']);
+global $global_IP_Address;
+
 // If the installer is present, transfer control
 if(file_exists('Includes/Utility/Installer.php')) require_once('Includes/Utility/Installer.php');
 
@@ -31,13 +39,5 @@ $global_Database = new Utility_Database();
 global $global_Database;
 $global_Database->Connect(@$global_Config->get_Database_Host(), @$global_Config->get_Database_Username(), @$global_Config->get_Database_Password(), @$global_Config->get_Database_Database());
 $global_Database->set_Prefix($global_Config->get_Database_Prefix());
-
-//Load the Permalink
-$global_Permalink = isset($_SERVER['REDIRECT_URL']) ? $_SERVER['REDIRECT_URL'] : @$_SERVER['REQUEST_URI'];
-global $global_Permalink;
-
-//Load the visitors IP Address
-$global_IP_Address = isset($_SERVER['HTTP_X_FORWARDED_FOR']) ? $_SERVER['HTTP_X_FORWARDED_FOR'] : (isset($_SERVER['HTTP_X_CLUSTER_CLIENT_IP']) ? $_SERVER['HTTP_X_CLUSTER_CLIENT_IP'] : @$_SERVER['REMOTE_ADDR']);
-global $global_IP_Address;
 
 ?>
