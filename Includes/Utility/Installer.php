@@ -5,4 +5,132 @@
  * http://creativecommons.org/licenses/by/3.0/
  * Based on a work at https://github.com/Foran/E-Storefront.
  ***********************************************************/
+
+$installer = new Installer();
+
+switch($global_Permalink) {
+	case '/finalstep.html':
+		$installer->FinalStep();
+		break;
+	case '/step1.html':
+		$installer->Step1();
+		break;
+	case '/welcome.html':
+	default:
+		$installer->WelcomeScreen();
+		break;
+}
+
+exit;
+
+if(!class_exists('Installer')) {
+	class Installer {
+		public function __construct() {
+			$this->m_CurrentStep = '';
+		}
+		
+		public function WelcomeScreen() {
+			$this->RedirectStep();
+
+			$macros = array();
+			$macros['content'] = '<h1>Welcome to the Install Wizard for E-Storefront</h1>';
+			$macros['content'] .= '<p><a href="/step1.html">Continue to Step 1</a></p>';
+			DisplayTemplate('installer.html', $macros);
+			exit;
+		}
+		
+		public function Step1() {
+			$macros = array();
+			$macros['content'] = '<h1>Install Wizard for E-Storefront</h1>';
+			$macros['content'] .= '<h2>Step 1</h2>';
+
+			global $global_Database;
+			if(@$_REQUEST['do_post'] == '1') {
+				if(strlen(trim(@$_REQUEST['hostname'])) > 0 && strlen(gethostbyname(trim(@$_REQUEST['hostname']))) > 0 && strlen(trim(@$_REQUEST['username'])) > 0 && strlen(trim(@$_REQUEST['password'])) > 0 && strlen(trim(@$_REQUEST['database'])) > 0) {
+					if($global_Database->Connect(trim(@$_REQUEST['hostname']), trim(@$_REQUEST['username']), trim(@$_REQUEST['password']), trim(@$_REQUEST['database']))) {
+						$_SESSION['database']['hostname'] = trim(@$_REQUEST['hostname']);
+						$_SESSION['database']['username'] = trim(@$_REQUEST['username']);
+						$_SESSION['database']['password'] = trim(@$_REQUEST['password']);
+						$_SESSION['database']['database'] = trim(@$_REQUEST['database']);
+						$_SESSION['database']['prefix'] = trim(@$_REQUEST['prefix']);
+					}
+				}
+			}
+			$this->RedirectStep();
+
+			$macros['content'] .= '<form method="post" action="'.$_SERVER['PHP_SELF'].'">';
+			$macros['content'] .= '<input type="hidden" name="do_post" value="1" />';
+			$macros['content'] .= '<table>';
+			$macros['content'] .= '<tr><th colspan="2">Database Information</th></tr>';
+			$macros['content'] .= '<tr><th>Hostname</th><td><input type="text" name="hostname" value="'.htmlentities(trim(@$_REQUEST['hostname'])).'" /></td></tr>';
+			$macros['content'] .= '<tr><th>Username</th><td><input type="text" name="username" value="'.htmlentities(trim(@$_REQUEST['username'])).'" /></td></tr>';
+			$macros['content'] .= '<tr><th>Password</th><td><input type="text" name="password" value="'.htmlentities(trim(@$_REQUEST['password'])).'" /></td></tr>';
+			$macros['content'] .= '<tr><th>Database</th><td><input type="text" name="database" value="'.htmlentities(trim(@$_REQUEST['database'])).'" /></td></tr>';
+			$macros['content'] .= '<tr><th>Prefix</th><td><input type="text" name="prefix" value="'.htmlentities(trim(@$_REQUEST['prefix']) == '' ? 'esf_' : trim(@$_REQUEST['prefix'])).'" /></td></tr>';
+			$macros['content'] .= '<tr><td colspan="2"><input type="submit" value="Next" /></td></tr>';
+			$macros['content'] .= '</table>';
+			$macros['content'] .= '</form>';
+			DisplayTemplate('installer.html', $macros);
+			exit;
+		}
+
+		public function FinalStep() {
+			$this->RedirectStep();
+			if(!@unlink(__FILE__)) {
+				$macros = array();
+				$macros['content'] = '<h1>Error</h1><p>Failed to remove '.__FILE__.', please delete this file to enable this site</p>';
+				DisplayTemplate('installer.html', $macros);
+				exit;
+			}
+		}
+		
+		private $m_CurrentStep;
+		/**
+		 * @return string CurrentStep
+		 */
+		public function GetStep() {
+			global $global_Permalink;
+
+			if($this->m_CurrentStep == '') {
+				$this->m_CurrentStep = 'welcome';
+				if($global_Permalink == '/step1.html') {
+					$this->m_CurrentStep = 'step1';
+				}
+				if(isset($_SESSION['database']['hostname']) && isset($_SESSION['database']['username']) && isset($_SESSION['database']['password']) && isset($_SESSION['database']['database']) && isset($_SESSION['database']['prefix'])) {
+					$this->m_CurrentStep = 'step2';
+				}
+			}
+			return $this->m_CurrentStep;
+		}
+		
+		/**
+		 * Redirects to the correct step
+		 */
+		public function RedirectStep()
+		{
+			global $global_Permalink;
+			
+			$destination = '';
+			switch($this->GetStep()) {
+				case 'welcome':
+					$destination = '/welcome.html';
+					break;
+				case 'step1':
+					$destination = '/step1.html';
+					break;
+				case 'step2':
+					$destination = '/step2.html';
+					break;
+				default:
+					break;
+			}
+			
+			if($destination != '' && $destination != $global_Permalink) {
+				header('HTTP 301 Permenent Redirect');
+				header('Location: '.$destination);
+				exit;
+			}
+		}
+	}
+}
 ?>
