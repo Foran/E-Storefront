@@ -6,6 +6,9 @@
  * Based on a work at https://github.com/Foran/E-Storefront.
  ***********************************************************/
 
+// If the prerequesits checker is present, transfer control
+if(file_exists('Includes/Utilities/PreCheck.php')) require_once('Includes/Utilities/PreCheck.php');
+
 // Initialize the Session
 session_start();
 
@@ -17,7 +20,7 @@ require_once('Classes/Utility/Database.php');
 require_once('Includes/Utilities/Templates.php');
 
 // If the installer is present, transfer control
-if(file_exists('Installer/installer.php')) require_once('Installer/installer.php');
+if(file_exists('Includes/Utilities/Installer.php')) require_once('Includes/Utilities/Installer.php');
 
 //Load the static configuration
 $global_Config = new Utility_Config('Main');
