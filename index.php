@@ -7,7 +7,7 @@
  ***********************************************************/
 
 // If the prerequesits checker is present, transfer control
-if(file_exists('Includes/Utilities/PreCheck.php')) require_once('Includes/Utilities/PreCheck.php');
+if(file_exists('Includes/Utility/PreCheck.php')) require_once('Includes/Utility/PreCheck.php');
 
 // Initialize the Session
 session_start();
@@ -17,10 +17,10 @@ require_once('Classes/Utility/Config.php');
 require_once('Classes/Utility/Database.php');
 
 //Include the template engine
-require_once('Includes/Utilities/Templates.php');
+require_once('Includes/Utility/Templates.php');
 
 // If the installer is present, transfer control
-if(file_exists('Includes/Utilities/Installer.php')) require_once('Includes/Utilities/Installer.php');
+if(file_exists('Includes/Utility/Installer.php')) require_once('Includes/Utility/Installer.php');
 
 //Load the static configuration
 $global_Config = new Utility_Config('Main');
