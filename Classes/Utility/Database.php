@@ -6,8 +6,10 @@
  * Based on a work at https://github.com/Foran/E-Storefront.
  ***********************************************************/
 
-if(!class_exists('Utility_Database')) {
-	class Utility_Database {
+require_once('Interfaces/Database.php');
+
+if(!class_exists('Utility_Database') && interface_exists('iDatabase')) {
+	class Utility_Database implements iDatabase {
 		private $m_Connection = null;
 		private $m_Prefix = '';
 		private $m_Query_Count = 0;
