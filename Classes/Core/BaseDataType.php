@@ -9,16 +9,33 @@
 require_once('Interfaces/DataType.php');
 
 if(!class_exists('Core_BaseDataType') && interface_exists('iDataType')) {
-	class Core_BaseDataType implements iDataType {
+	abstract class Core_BaseDataType implements iDataType {
 		protected $m_data_Members = array();
 		protected $m_data_Member_Map = array();
+		private $m_Primary_Key = false;
+		protected $m_Table = null;
 		
 		/**
 		 * @param Primary_Key $id
 		 */
 		function __construct($id = null) {
-			$this->Reset();
 			if($id != null) $this->Load($id);
+			else $this->Reset();
+		}
+		
+		protected function get_Primary_Key() {
+			if($this->m_Primary_Key === false) {
+				foreach($this->m_data_Members as $member => $value) {
+					if(in_array($member, array_keys($this->m_data_Member_Map)) && in_array('primary_key', array_keys($this->m_data_Member_Map[$member]))) {
+						$this->m_Primary_Key = $member;
+						break;
+					}
+				}
+			}
+			
+			$retval = $this->m_Primary_Key;
+			
+			return $retval;
 		}
 		
 		function __get(string $name) {
@@ -52,7 +69,7 @@ if(!class_exists('Core_BaseDataType') && interface_exists('iDataType')) {
 		
 		function Reset() {
 			foreach($this->m_data_Members as $member => $value) {
-				$this->m_data_Members[$member] = (in_array($name, array_keys($this->m_data_Member_Map)) && !in_array('default', array_keys($this->m_data_Member_Map[$name]))) ? $this->m_data_Member_Map[$name]['default'] : null;
+				$this->m_data_Members[$member] = (in_array($member, array_keys($this->m_data_Member_Map)) && !in_array('default', array_keys($this->m_data_Member_Map[$member]))) ? $this->m_data_Member_Map[$member]['default'] : null;
 			}
 		}
 		
@@ -61,7 +78,22 @@ if(!class_exists('Core_BaseDataType') && interface_exists('iDataType')) {
 		 * @return bool
 		 */
 		function Load($id) {
-			return false;
+			$retval = false;
+			global $global_Database;
+			
+			$this->Reset();
+			
+			if(is_array($row = $global_Database->PrimaryKeySelect($this->m_Table, $this->get_Primary_Key(), $id))) {
+				foreach($this->m_data_Members as $member => $value) {
+					if(in_array($member, array_keys($this->m_data_Member_Map)) && !in_array('skip_load_from_database', array_keys($this->m_data_Member_Map[$member]))) {
+						$custom = in_array($member, array_keys($this->m_data_Member_Map)) && in_array('load_from_database', array_keys($this->m_data_Member_Map[$member]));
+						eval("\$this->$member = \$custom ? \$this->m_data_Member_Map[\$member]['load_from_database']() : \$row[\$member]");
+					}
+				}
+				$retval = true;
+			}
+			
+			return $retval;
 		}
 		
 		/**
