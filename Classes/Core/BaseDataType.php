@@ -100,7 +100,35 @@ if(!class_exists('Core_BaseDataType') && interface_exists('iDataType')) {
 		 * @return bool
 		 */
 		function Save() {
-			return false;
+			$retval = false;
+			global $global_Database;
+			
+			
+			$values = array();
+			$functions = array();
+			if(!is_null($this->m_data_Members[$this->get_Primary_Key()])) {
+				foreach($this->m_data_Members as $member => $value) {
+					if(in_array($member, array_keys($this->m_data_Member_Map)) && !in_array('skip_update_database', array_keys($this->m_data_Member_Map[$member])) && !in_array('primary_key', array_keys($this->m_data_Member_Map[$member])) && !in_array('created', array_keys($this->m_data_Member_Map[$member])) && !in_array('last_updated', array_keys($this->m_data_Member_Map[$member]))) {
+						$values[$member] = $value;
+						if(in_array('insert_function', array_keys($this->m_data_Member_Map[$member]))) $functions[$member] = $this->m_data_Member_Map[$member]['insert_function'];
+					}
+				}
+				if($global_Database->PrimaryKeyUpdate($this->m_Table, $this->get_Primary_Key(), $this->m_data_Members[$this->get_Primary_Key()], $values, $functions)) $retval = true;
+			}
+			else {
+				foreach($this->m_data_Members as $member => $value) {
+					if(in_array($member, array_keys($this->m_data_Member_Map)) && !in_array('skip_insert_database', array_keys($this->m_data_Member_Map[$member])) && !in_array('primary_key', array_keys($this->m_data_Member_Map[$member])) && !in_array('last_updated', array_keys($this->m_data_Member_Map[$member]))) {
+						$values[$member] = $value;
+						if(in_array('update_function', array_keys($this->m_data_Member_Map[$member]))) $functions[$member] = $this->m_data_Member_Map[$member]['update_function'];
+					}
+				}
+				if($id = $global_Database->BasicInsert($this->m_Table, $values, $functions)) {
+					$retval = true;
+					$this->m_data_Members[$this->get_Primary_Key()] = $id;
+				}
+			}
+			
+			return $retval;
 		}
 		
 		/**
@@ -108,7 +136,17 @@ if(!class_exists('Core_BaseDataType') && interface_exists('iDataType')) {
 		 * @return bool
 		 */
 		function Delete($cascade = false) {
-			return false;
+			$retval = false;
+			global $global_Database;
+			
+			if(!is_null($this->m_data_Members[$this->get_Primary_Key()])) {
+				if($global_Database->PrimaryKeyDelete($this->m_Table, $this->get_Primary_Key(), $this->m_data_Members[$this->get_Primary_Key()])) {
+					$retval = true;
+					$this->Reset();
+				}
+			}
+			
+			return $retval;
 		}
 	}
 }
